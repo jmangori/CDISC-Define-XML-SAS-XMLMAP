@@ -13,7 +13,7 @@ The SAS XMLMAPS for converting any CDISC ODM-xml file and CDISC define-xml files
 * SAS version 9.2 and above.
 
 # Getting Started
-Download the documents and place them at the location where they are needed
+Download the documents and place them at the location where they are needed.
 
 ## XML Maps
 The XMLMAP files can reside anywhere on your computer or system. The only requirement is that they are available to the SAS program that wants to use them.  Then write a SAS program along these lines:
