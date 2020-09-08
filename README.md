@@ -64,8 +64,6 @@ The result is a copy of all the datasets defined in the `odm_1_3_2.map` file, wh
 # Roadmap
 As new version of ODM-xml and define-xml are published by CDISC, I hope to be able to write new versions of relevant documents for these.
 
-Futhermore, I am very willing to take advise on how to improve my simple-style coding.
-
 I am considering to write XSL Translating Style Sheets to replace the XML maps, to be able to include more business logic for creating a more coherent data model. This may not require another XML Map, as the target could be one of the simple data models built into the XMLV2 engine.
 
 # License
@@ -77,8 +75,3 @@ Jørgen Mangor Iversen [jmi@try2.info](mailto:jmi@try2.info)
 [My web page in danish](http://www.try2.info) unrelated to this project.
 
 [My LinkedIn profile](https://www.linkedin.com/in/jørgen-iversen-ab5908b/)
-
-
-
-
-
