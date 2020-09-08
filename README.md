@@ -1,6 +1,4 @@
 # About The Project
-I have been working with reporting and statistics for clinical trials in the pharmaceutical industry since 2005. During this time I have often wondered why the industry is so reluctant to invest in modern software solutions, preferring to invest in manpower while not really exploiting the skills of an extremely well educated workforce.
-
 For one and a half decade I have sought high and low for a (set of) SAS XMLMAP(s) to convert CDISC ODM-xml and define-xml files into SAS datasets for building metadata driven processes to report and analyze clinical trials. After way too much patience I decided to build them myself. 
 
 ![Infographic about mapping](images/mapping_overview.png)
