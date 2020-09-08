@@ -61,6 +61,19 @@ The result is a copy of all the datasets defined in the `odm_1_3_2.map` file, wh
 
 ![Example dataset from odm-xml](images/ODMDatasets.png)
 
+### define_2_0_0.sas
+This document is a SAS macro to incapsulate all the details of the mapping and subsequent construction of a very familliar data model in SAS. The data model consists of dataset to hold the familliar levels of metadata that comprises a define-xml document.
+
+Example program:
+
+> `libname metalib "C:\temp\metadata";`
+> `%define_2_0_0(define = %str(C:\temp\metadata\SDTM Define-XML 2.0.xml), xmlmap  = %str(C:\temp\metadata\define_2_0_0.map));`
+> `%define_2_0_0(define = %str(C:\temp\metadata\ADaM Define-XML 2.0.xml), xmlmap  = %str(C:\temp\metadata\define_2_0_0.map));`
+
+The result is a collection of SAS datasets per CDISC data model (SDTM/ADaM) organized the same way. These files can be used for a standardized way (macros etc.) to generate CDISC compliant SAS datasets, dependent on the correctness of the define-xml input file.
+
+![Example dataset define_2__0_0.sas](images/MetadataDatasets.png)
+
 # Roadmap
 As new version of ODM-xml and define-xml are published by CDISC, I hope to be able to write new versions of relevant documents for these.
 
