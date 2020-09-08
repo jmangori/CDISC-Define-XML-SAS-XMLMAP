@@ -66,9 +66,9 @@ This document is a SAS macro to incapsulate all the details of the mapping and s
 
 Example program:
 
-> `libname metalib "C:\temp\metadata";`
-> `%define_2_0_0(define = %str(C:\temp\metadata\SDTM Define-XML 2.0.xml), xmlmap  = %str(C:\temp\metadata\define_2_0_0.map));`
-> `%define_2_0_0(define = %str(C:\temp\metadata\ADaM Define-XML 2.0.xml), xmlmap  = %str(C:\temp\metadata\define_2_0_0.map));`
+> `libname metalib "C:\temp\metadata";` 
+> `%define_2_0_0(define = %str(C:\temp\metadata\SDTM Define-XML 2.0.xml), xmlmap  = %str(C:\temp\metadata\define_2_0_0.map));` 
+> `%define_2_0_0(define = %str(C:\temp\metadata\ADaM Define-XML 2.0.xml), xmlmap  = %str(C:\temp\metadata\define_2_0_0.map));` 
 
 The result is a collection of SAS datasets per CDISC data model (SDTM/ADaM) organized the same way. These files can be used for a standardized way (macros etc.) to generate CDISC compliant SAS datasets, dependent on the correctness of the define-xml input file.
 
