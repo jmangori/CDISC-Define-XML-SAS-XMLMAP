@@ -2,7 +2,7 @@
 * Project           : CDISC-ODM-and-Define-XML-tools
 * Program name      : read_defines.sas
 * Author            : Katja Glass
-* Date created      : 2020-08-31
+* Date created      : 2020-09-11
 * Purpose           : Show how to apply the open source tool to transfer define.xml to SAS datasets
 *
 * Revision History  :
@@ -34,55 +34,94 @@
 %************************************************************************************************************************;
 
 
-%LET drive = /folders/myshortcuts/git/XML-tools;
+%LET drive = /folders/myshortcuts/git/define-xmlmap;
 OPTIONS LS=200;
 
+%* Macro to print all datasets from a library to an HTML file;
+%MACRO print_all_datasets_in_lib (lib=,outfile=);
+	%GLOBAL datasets;
+	PROC SQL NOPRINT;
+		SELECT memname INTO :datasets SEPARATED BY " " FROM dictionary.tables WHERE libname = "%UPCASE(&lib)";
+	RUN;QUIT;
+	
+	%MACRO print_all_data();
+		%DO i = 1 %TO %SYSFUNC(COUNTW(&datasets%STR( )));
+			TITLE2 "Dataset: %SCAN(&datasets,&i)";
+			PROC PRINT WIDTH=min DATA=&lib..%SCAN(&datasets,&i);
+			RUN;
+		%END;
+	%MEND;
+	
+	ODS HTML FILE = "&outfile";
+	%print_all_data();
+	ODS HTML CLOSE;
+%MEND print_all_datasets_in_lib;
+
+
 %***************************************************************;
-%* SDTM Define Example;
+%* SDTM Define Example (pure mapping);
 %***************************************************************;
 
 filename define url "https://raw.githubusercontent.com/phuse-org/phuse-scripts/master/data/sdtm/TDF_SDTM_v1.0/define.xml";
 filename xmlmap "&drive/map_files/define_2_0_0.map";
 libname define xmlv2 xmlmap=xmlmap access=READONLY compat=yes;
 
-%GLOBAL datasets;
-PROC SQL NOPRINT;
-	SELECT memname INTO :datasets SEPARATED BY " " FROM dictionary.tables WHERE libname = "DEFINE";
-RUN;QUIT;
+TITLE1 "SDTM Example - mapped libname content";
+%print_all_datasets_in_lib (lib=DEFINE,outfile=&drive/examples/output_example_sdtm_pure.html);
 
-%MACRO print_all_data();
-	%DO i = 1 %TO %SYSFUNC(COUNTW(&datasets%STR( )));
-		TITLE "Dataset: %SCAN(&datasets,&i)";
-		PROC PRINT WIDTH=min DATA=define.%SCAN(&datasets,&i);
-		RUN;
-	%END;
-%MEND;
-
-ODS HTML FILE = "&drive/examples/sdtm_example.html";
-%print_all_data();
-ODS HTML CLOSE;
 	
 %***************************************************************;
-%* ADAM Define Example;
+%* ADAM Define Example (pure mapping);
 %***************************************************************;
 
 filename define url "https://raw.githubusercontent.com/phuse-org/phuse-scripts/master/data/adam/TDF_ADaM_v1.0/define.xml";
 filename xmlmap "&drive/map_files/define_2_0_0.map";
 libname define xmlv2 xmlmap=xmlmap access=READONLY compat=yes;
 
-%GLOBAL datasets;
-PROC SQL NOPRINT;
-	SELECT memname INTO :datasets SEPARATED BY " " FROM dictionary.tables WHERE libname = "DEFINE";
-RUN;QUIT;
+TITLE1 "ADAM Example - mapped libname content";
+%print_all_datasets_in_lib (lib=DEFINE,outfile=&drive/examples/output_example_adam_pure.html);
 
-%MACRO print_all_data();
-	%DO i = 1 %TO %SYSFUNC(COUNTW(&datasets%STR( )));
-		TITLE "Dataset: %SCAN(&datasets,&i)";
-		PROC PRINT WIDTH=min DATA=define.%SCAN(&datasets,&i);
-		RUN;
-	%END;
-%MEND;
 
-ODS HTML FILE = "&drive/examples/adam_example.html";
-%print_all_data();
-ODS HTML CLOSE;
+%***************************************************************;
+%* Download example files;
+%***************************************************************;
+
+%* download adam and sdtm define.xml files for tests;
+FILENAME out "&drive/examples/out_sdtm/define.xml";
+PROC HTTP
+ 	URL='https://raw.githubusercontent.com/phuse-org/phuse-scripts/master/data/sdtm/TDF_SDTM_v1.0/define.xml'
+ 	METHOD="get" OUT=out;
+RUN;
+FILENAME out;
+FILENAME out "&drive/examples/out_adam/define.xml";
+PROC HTTP
+ 	URL='https://raw.githubusercontent.com/phuse-org/phuse-scripts/master/data/adam/TDF_ADaM_v1.0/define.xml'
+ 	METHOD="get" OUT=out;
+RUN;
+FILENAME out;
+
+
+%***************************************************************;
+%* SDTM Define Example (mapping & macro processing);
+%***************************************************************;
+
+libname metalib "&drive/examples/out_sdtm";
+%INCLUDE "&drive/examples/define_2_0_0.sas";
+%define_2_0_0(define = &drive/examples/out_sdtm/define.xml,
+              xmlmap  = &drive/map_files/define_2_0_0.map);
+        
+
+%print_all_datasets_in_lib (lib=metalib,outfile=&drive/examples/output_example_sdtm.html);        
+        
+             
+%***************************************************************;
+%* ADAM Define Example (mapping & macro processing);
+%***************************************************************;
+
+libname metalib "&drive/examples/out_adam";
+%INCLUDE "&drive/examples/define_2_0_0.sas";
+%define_2_0_0(define = &drive/examples/out_adam/define.xml,
+              xmlmap  = &drive/map_files/define_2_0_0.map);       
+             
+%print_all_datasets_in_lib (lib=metalib,outfile=&drive/examples/output_example_adam.html);                     
+             
