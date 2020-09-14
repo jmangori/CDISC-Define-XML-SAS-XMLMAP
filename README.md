@@ -1,7 +1,7 @@
 # About The Project
 For one and a half decade I have sought high and low for a (set of) SAS XMLMAP(s) to convert CDISC ODM-xml and define-xml files into SAS datasets for building metadata driven processes to report and analyze clinical trials. After way too much patience I decided to build them myself. 
 
-![Infographic about mapping](images/mapping_overview.png)
+![Infographic about mapping](mapping_overview.png)
 
 The define-xml can serve as a one source of truth for the definition of SDTM and ADaM data specifications. Define-xml was originally developed as a documentation tool, but by feeding the dog it’s own tail, it can do much more than this acting as a definition document. The idea is to have a specification document to allow SDTM and ADaM datasets to be built in an automated way. SAS being the (still) preferred analysis tool in the pharma industry, such automation calls for a conversion of the metadata within define-xml to be converted to SAS datasets. Furthermore, the define-xml itself as a specification can be handed over to any external data provider (CRO) as a definition of expected deliverables. Once the data is delivered, a new define-xml can be produced from the data package using any available tool to do so, and the resulting define-xml can the be compared to the specification one, to measure any gaps between the specification and the delivery. Such a XML comparison tool is not part of this project.
 
