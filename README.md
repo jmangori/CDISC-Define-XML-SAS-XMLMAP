@@ -17,9 +17,12 @@ Download the documents and place them at the location where they are needed.
 
 ## XML Maps
 The XMLMAP files can reside anywhere on your computer or system. The only requirement is that they are available to the SAS program that wants to use them.  Then write a SAS program along these lines:
-> `filename define “<your drive>:\<your path>\<your define file.xml>”;`  
-> `filename xmlmap “<your drive>:\<your path>\define_2_0_0.map”;`  
-> `libname  define xmlv2 xmlmap=xmlmap access=READONLY compat=yes;`  
+
+```sas
+filename define “<your drive>:\<your path>\<your define file.xml>”;
+filename xmlmap “<your drive>:\<your path>\define_2_0_0.map”;
+libname  define xmlv2 xmlmap=xmlmap access=READONLY compat=yes;
+```
 
 Please pay attention to the specific options to the `libname` statement. Please note that the **fileref** for the XML file must be identical to **libref** of the `libname` statement as per the SAS documentation of the XML (and XMLV2) engines of the `libname` statement.
 
@@ -34,12 +37,14 @@ This document is a piece of XML defining how to interpret a valid CDSIC define-x
 
 Example program:
 
-> `filename define “W:\XML Mapper\SDTM Define-XML 2.0.xml”;`  
-> `filename xmlmap “W:\XML Mapper\define_2_0_0.map”;`  
-> `libname  define xmlv2 xmlmap=xmlmap access=READONLY compat=yes;`  
->  
-> `proc copy in=define out=work;`  
-> `run;`  
+```sas
+filename define “W:\XML Mapper\SDTM Define-XML 2.0.xml”;
+filename xmlmap “W:\XML Mapper\define_2_0_0.map”;
+libname  define xmlv2 xmlmap=xmlmap access=READONLY compat=yes;
+
+proc copy in=define out=work;
+run;
+```
 
 The result is a copy of all the datasets defined in the `define_2_0_0.map` file, which has an XPATH representation within the define-xml file. These files can be used for further processing in SAS to build the complete metadata for a collection of SDTM or ADaM datasets, depenent of the contents of the define-xml file.
 
@@ -50,12 +55,14 @@ This document is a piece of XML defining how to interpret a valid CDSIC ODM-xml 
 
 Example program:
 
-> `filename odm “W:\XML Mapper\CDISC odm 1.3.2.xml”;`  
-> `filename map “W:\XML Mapper\odm_1_3_2.map”;`  
-> `libname  odm xmlv2 xmlmap=xmlmap access=READONLY compat=yes;`  
->  
-> `proc copy in=odm out=work;`  
-> `run;`  
+```sas
+filename odm “W:\XML Mapper\CDISC odm 1.3.2.xml”;
+filename map “W:\XML Mapper\odm_1_3_2.map”;
+libname  odm xmlv2 xmlmap=xmlmap access=READONLY compat=yes;
+
+proc copy in=odm out=work;
+run;
+```
 
 The result is a copy of all the datasets defined in the `odm_1_3_2.map` file, which has an XPATH representation within the ODM-xml file. These files can be used for further processing in SAS to build a rendition of the CRF, of coorelating the contents of define-xml and ODM_xml.
 
