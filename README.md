@@ -87,10 +87,10 @@ The result is a collection of SAS datasets per CDISC data model (SDTM/ADaM) orga
 ![Example dataset define_2__0_0.sas](images/MetadataDatasets.png)
 
 ### odm_1_3_2.sas
-This program is a SAS macro to create a set of SAS datasets following exactly the same data struture as the ```sas %define_2_0_0.sas``` macro, enabling the CRF to be compared to the SDTM define-xml for the same study.
+This program is a SAS macro to create a set of SAS datasets following exactly the same data struture as the `%define_2_0_0.sas` macro, enabling the CRF to be compared to the SDTM define-xml for the same study.
 
 ### define_crf.sas
-This program is a SAS macro to adjust the metadata tables created via the ```sas define_2_0_0.sas``` macro, with the intent to align a specification define-xml to the SDTM annotations within an ODM-xml file serving as a specification of a corresponding CRF.
+This program is a SAS macro to adjust the metadata tables created via the `define_2_0_0.sas` macro, with the intent to align a specification define-xml to the SDTM annotations within an ODM-xml file, serving as a specification of a corresponding CRF. This is only valid for a define-xml specification of SDTM, not ADaM.
 
 All changes are printed to the standard SAS output destinations, as well as a report of all define-xml variables having Origin=CRF versus all variables in the SDTM annotations of the CRF. This last report is intended to catch missalignments between the Origin column in the define-xml specification and the SDTM annotations of the CRF specification.
 
