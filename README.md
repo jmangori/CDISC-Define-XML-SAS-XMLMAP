@@ -1,5 +1,5 @@
 # About The Project
-For one and a half decade I have sought high and low for a (set of) SAS XMLMAP(s) to convert CDISC ODM-xml and define-xml files into SAS datasets for building metadata driven processes to report and analyze clinical trials. After way too much patience I decided to build them myself. 
+For one and a half decade I have sought high and low for a (set of) SAS XMLMAP(s) to convert CDISC ODM-xml and define-xml files into SAS datasets for building metadata driven processes to report and analyze clinical trials. After way too much patience I decided to build them myself.
 
 ![Infographic about mapping](images/mapping_overview.png)
 
@@ -9,14 +9,15 @@ The define-xml can serve as a one source of truth for the definition of SDTM and
 The SAS XMLMAPS for converting any CDISC ODM-xml file and CDISC define-xml files into SAS datasets is build using the freely available SAS XML Mapper tool in its original configuration as it comes as a download from SAS Institute. No tweaking or java upgrades were performed. The SAS XML Mapper is available from SAS Institute at [SAS Downloads: SAS XML Mapper](https://support.sas.com/downloads/package.htm?pid=486). You will need to register at the SAS web page to get the download. This tool creates an XML document in a particular format for defining SAS datasets from an example XML source file and an optional XML schema file. The main engine in the process is the XPATH language as known from other contexts.
 
 #### Versions covered are:
-* Define-xml version 2.0.0.
+* Define-xml version 2.0.0
+* ODM-xml version 1.3.2
 * SAS version 9.2 and above.
 
 # Getting Started
 Download the documents and place them at the location where they are needed.
 
 ## XML Maps
-The XMLMAP files can reside anywhere on your computer or system. The only requirement is that they are available to the SAS program that wants to use them.  Then write a SAS program along these lines:
+The XMLMAP files can reside anywhere on your computer or system. The only requirement is that they are available to the SAS program that wants to use them. Then write a SAS program along these lines:
 
 ```sas
 filename define “<your drive>:\<your path>\<your define file.xml>”;
@@ -26,7 +27,7 @@ libname  define xmlv2 xmlmap=xmlmap access=READONLY compat=yes;
 
 Please pay attention to the specific options to the `libname` statement. Please note that the **fileref** for the XML file must be identical to **libref** of the `libname` statement as per the SAS documentation of the XML (and XMLV2) engines of the `libname` statement.
 
-These three statements creates a libref to the XML document enabling SAS to read all datasets defined in the XMLMAP as SAS datasets.
+These three statements creates a **libref** to the XML document enabling SAS to read all datasets defined in the XMLMAP as SAS datasets.
 
 ## Prerequisites
 SAS/Base software minimum version 9.2. If you are running in a SAS 9.2 session, use the alias XML92 as the XML engine name in place of XMLV2.
@@ -51,7 +52,7 @@ The result is a copy of all the datasets defined in the `define_2_0_0.map` file,
 ![Example dataset from define-xml](images/DefineDatasets.png)
 
 ### odm_1_3_2.map
-This document is a piece of XML defining how to interpret a valid CDSIC ODM-xml file as a set of SAS datasets defining metadata for a clinical trial. The resulting datasets can be used to display an SDTM annotated CRF, as well as pruning SDTM metadata to comply with a corresponding CRF.
+This document is a piece of XML defining how to interpret a valid CDISC ODM-xml file as a set of SAS datasets defining metadata for a clinical trial. The resulting datasets can be used to display an SDTM annotated CRF, as well as pruning SDTM metadata to comply with a corresponding CRF.
 
 Example program:
 
@@ -69,7 +70,7 @@ The result is a copy of all the datasets defined in the `odm_1_3_2.map` file, wh
 ![Example dataset from odm-xml](images/ODMDatasets.png)
 
 ### define_2_0_0.sas
-This document is a SAS macro to incapsulate all the details of the mapping and subsequent construction of a very familliar data model in SAS. The data model consists of dataset to hold the familliar levels of metadata that comprises a define-xml document.
+This program is a SAS macro to incapsulate all the details of the mapping and subsequent construction of a very familliar data model as SAS datasets. The data model consists of dataset to hold the familliar levels of metadata that comprises a define-xml document.
 
 Example program:
 
@@ -84,6 +85,14 @@ libname metalib "C:\temp\metadata";
 The result is a collection of SAS datasets per CDISC data model (SDTM/ADaM) organized the same way. These files can be used for a standardized way (macros etc.) to generate CDISC compliant SAS datasets, dependent on the correctness of the define-xml input file.
 
 ![Example dataset define_2__0_0.sas](images/MetadataDatasets.png)
+
+### odm_1_3_2.sas
+This program is a SAS macro to create a set of SAS datasets following exactly the same data struture as the `%define_2_0_0.sas` macro, enabling the CRF to be compared to the SDTM define-xml for the same study.
+
+### define_crf.sas
+This program is a SAS macro to adjust the metadata tables created via the `define_2_0_0.sas` macro, with the intent to align a specification define-xml to the SDTM annotations within an ODM-xml file, serving as a specification of a corresponding CRF. This is only valid for a define-xml specification of SDTM, not ADaM.
+
+All changes are printed to the standard SAS output destinations, as well as a report of all define-xml variables having **Origin='CRF'** versus all variables in the SDTM annotations of the CRF. This last report is intended to catch missalignments between the **Origin** column in the define-xml specification and the SDTM annotations of the CRF specification.
 
 # Roadmap
 As new version of ODM-xml and define-xml are published by CDISC, I hope to be able to write new versions of relevant documents for these.
