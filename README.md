@@ -92,7 +92,7 @@ This program is a SAS macro to create a set of SAS datasets following exactly th
 ### define_crf.sas
 This program is a SAS macro to adjust the metadata tables created via the `define_2_0_0.sas` macro, with the intent to align a specification define-xml to the SDTM annotations within an ODM-xml file, serving as a specification of a corresponding CRF. This is only valid for a define-xml specification of SDTM, not ADaM.
 
-All changes are printed to the standard SAS output destinations, as well as a report of all define-xml variables having **Origin='CRF'** versus all variables in the SDTM annotations of the CRF. This last report is intended to catch missalignments between the Origin column in the define-xml specification and the SDTM annotations of the CRF specification.
+All changes are printed to the standard SAS output destinations, as well as a report of all define-xml variables having **Origin='CRF'** versus all variables in the SDTM annotations of the CRF. This last report is intended to catch missalignments between the **Origin** column in the define-xml specification and the SDTM annotations of the CRF specification.
 
 # Roadmap
 As new version of ODM-xml and define-xml are published by CDISC, I hope to be able to write new versions of relevant documents for these.
