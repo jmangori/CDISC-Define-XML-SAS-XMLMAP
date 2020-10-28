@@ -102,7 +102,7 @@
   data &out (keep= OID Pages);
     set _temp_pages;
     by OID;
-    length Pages $ 200;
+    length Pages $ 500;
     retain Pages '';
     if first.OID then do;
       Pages = '';
