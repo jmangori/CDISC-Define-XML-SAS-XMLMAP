@@ -59,12 +59,12 @@
   /* Detect which standard from the short list of Allowable Values (Extensible) */
   %let standard =;
   proc sql noprint;
-    select distinct scan(StandardName, 1)
+    select distinct lowcase(scan(StandardName, 1))
       into :standard
       from define.Study;
   quit;
   %let standard = %trim(&standard);
-  %if &standard = %then %panic(No valid standard defined in define-xml file %upcase(&define).);
+  %if &standard = %then %panic(No valid standard defined in define-xml file "&define".);
 
   /* Collect all variables part of simple or compound keys */
   proc sql;
