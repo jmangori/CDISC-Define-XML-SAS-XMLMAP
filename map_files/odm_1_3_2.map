@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-	Copyright (c) 2020 Jørgen Mangor Iversen
+  Copyright (c) 2020 Jørgen Mangor Iversen
 
-	Permission is hereby granted, free of charge, to any person obtaining a copy
-	of this software and associated documentation files (the "Software"), to deal
-	in the Software without restriction, including without limitation the rights
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	copies of the Software, and to permit persons to whom the Software is
-	furnished to do so, subject to the following conditions:
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
 
-	The above copyright notice and this permission notice shall be included in all
-	copies or substantial portions of the Software.
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
 
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-	SOFTWARE.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
 -->
 
 <!-- ############################################################ -->
@@ -223,7 +223,7 @@
             <PATH syntax="XPath">/ODM/Study/BasicDefinitions/MeasurementUnit/@OID</PATH>
             <TYPE>character</TYPE>
             <DATATYPE>string</DATATYPE>
-            <LENGTH>7</LENGTH>
+            <LENGTH>200</LENGTH>
         </COLUMN>
 
         <COLUMN name="Context">
@@ -283,6 +283,26 @@
 
         <COLUMN name="IncludeMetaDataVersionOID">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/Include/@MetaDataVersionOID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="MetaDataVersionLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/Protocol/Description/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="StudyOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
             <TYPE>character</TYPE>
             <DATATYPE>string</DATATYPE>
             <LENGTH>200</LENGTH>
@@ -417,6 +437,26 @@
             <LENGTH>200</LENGTH>
         </COLUMN>
 
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="StudyEventDefLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/StudyEventDef/Description/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/StudyEventDef/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
         <COLUMN name="Description">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/StudyEventDef/Description/TranslatedText</PATH>
             <TYPE>character</TYPE>
@@ -546,11 +586,31 @@
             <LENGTH>200</LENGTH>
         </COLUMN>
 
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="FormDefLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/FormDef/Description/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/FormDef/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
         <COLUMN name="Description">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/FormDef/Description/TranslatedText</PATH>
             <TYPE>character</TYPE>
             <DATATYPE>string</DATATYPE>
-            <LENGTH>500</LENGTH>
+            <LENGTH>5000</LENGTH>
         </COLUMN>
 
         <COLUMN name="lang">
@@ -751,6 +811,26 @@
             <LENGTH>500</LENGTH>
         </COLUMN>
 
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="ItemGroupDefLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemGroupDef/Description/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemGroupDef/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
         <COLUMN name="Description">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemGroupDef/Description/TranslatedText</PATH>
             <TYPE>character</TYPE>
@@ -947,34 +1027,6 @@
             <LENGTH>500</LENGTH>
         </COLUMN>
 
-        <COLUMN name="Description">
-            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Description/TranslatedText</PATH>
-            <TYPE>character</TYPE>
-            <DATATYPE>string</DATATYPE>
-            <LENGTH>5000</LENGTH>
-        </COLUMN>
-
-        <COLUMN name="Description_lang">
-            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Description/TranslatedText/@xml:lang</PATH>
-            <TYPE>character</TYPE>
-            <DATATYPE>string</DATATYPE>
-            <LENGTH>200</LENGTH>
-        </COLUMN>
-
-        <COLUMN name="Question">
-            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Question/TranslatedText</PATH>
-            <TYPE>character</TYPE>
-            <DATATYPE>string</DATATYPE>
-            <LENGTH>1000</LENGTH>
-        </COLUMN>
-
-        <COLUMN name="Question_lang">
-            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Question/TranslatedText/@xml:lang</PATH>
-            <TYPE>character</TYPE>
-            <DATATYPE>string</DATATYPE>
-            <LENGTH>200</LENGTH>
-        </COLUMN>
-
         <COLUMN name="Dictionary">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/ExternalQuestion/@Dictionary</PATH>
             <TYPE>character</TYPE>
@@ -998,6 +1050,74 @@
 
         <COLUMN name="CodeListOID">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/CodeListRef/@CodeListOID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="ItemDefLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Description/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="Description">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Description/TranslatedText</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>5000</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="lang">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Description/TranslatedText/@xml:lang</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="QuestionLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Question/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="Description">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Question/TranslatedText</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>1000</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="lang">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/Question/TranslatedText/@xml:lang</PATH>
             <TYPE>character</TYPE>
             <DATATYPE>string</DATATYPE>
             <LENGTH>200</LENGTH>
@@ -1092,6 +1212,26 @@
             <LENGTH>200</LENGTH>
         </COLUMN>
 
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="ItemDefRangeCheckLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/RangeCheck/ErrorMessage/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
         <COLUMN name="ErrorMessage">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ItemDef/RangeCheck/ErrorMessage/TranslatedText</PATH>
             <TYPE>character</TYPE>
@@ -1181,20 +1321,6 @@
             <LENGTH>200</LENGTH>
         </COLUMN>
 
-        <COLUMN name="Description">
-            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/Description/TranslatedText</PATH>
-            <TYPE>character</TYPE>
-            <DATATYPE>string</DATATYPE>
-            <LENGTH>500</LENGTH>
-        </COLUMN>
-
-        <COLUMN name="lang">
-            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/Description/TranslatedText/@xml:lang</PATH>
-            <TYPE>character</TYPE>
-            <DATATYPE>string</DATATYPE>
-            <LENGTH>200</LENGTH>
-        </COLUMN>
-
         <COLUMN name="Dictionary">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/ExternalCodeList/@Dictionary</PATH>
             <TYPE>character</TYPE>
@@ -1240,6 +1366,40 @@
     </TABLE>
 
     <!-- ############################################################ -->
+    <TABLE name="CodeListLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/Description/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="Description">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/Description/TranslatedText</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>500</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="lang">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/Description/TranslatedText/@xml:lang</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+    </TABLE>
+
+    <!-- ############################################################ -->
     <TABLE name="CodeListItem">
         <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/CodeListItem</TABLE-PATH>
 
@@ -1276,20 +1436,6 @@
             <DATATYPE>integer</DATATYPE>
         </COLUMN>
 
-        <COLUMN name="Decode">
-            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/CodeListItem/Decode/TranslatedText</PATH>
-            <TYPE>character</TYPE>
-            <DATATYPE>string</DATATYPE>
-            <LENGTH>200</LENGTH>
-        </COLUMN>
-
-        <COLUMN name="lang">
-            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/CodeListItem/Decode/TranslatedText/@xml:lang</PATH>
-            <TYPE>character</TYPE>
-            <DATATYPE>string</DATATYPE>
-            <LENGTH>200</LENGTH>
-        </COLUMN>
-
         <COLUMN name="Context">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/CodeListItem/Alias/@Context</PATH>
             <TYPE>character</TYPE>
@@ -1299,6 +1445,47 @@
 
         <COLUMN name="Alias">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/CodeListItem/Alias/@Name</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="CodeListItemLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/CodeListItem/Decode/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="CodedValue" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/CodeListItem/@CodedValue</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="Decode">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/CodeListItem/Decode/TranslatedText</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>500</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="lang">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/CodeList/CodeListItem/Decode/TranslatedText/@xml:lang</PATH>
             <TYPE>character</TYPE>
             <DATATYPE>string</DATATYPE>
             <LENGTH>200</LENGTH>
@@ -1418,6 +1605,26 @@
             <LENGTH>500</LENGTH>
         </COLUMN>
 
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="ConditionDefLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/ConditionDef/Description/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ConditionDef/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
         <COLUMN name="Description">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/ConditionDef/Description/TranslatedText</PATH>
             <TYPE>character</TYPE>
@@ -1529,6 +1736,26 @@
 
         <COLUMN name="Type">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/MethodDef/@Type</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+    </TABLE>
+
+    <!-- ############################################################ -->
+    <TABLE name="MethodDefLang">
+        <TABLE-PATH syntax="XPath">/ODM/Study/MetaDataVersion/MethodDef/Description/TranslatedText</TABLE-PATH>
+
+        <COLUMN name="MDVOID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="OID" retain="YES">
+            <PATH syntax="XPath">/ODM/Study/MetaDataVersion/MethodDef/@OID</PATH>
             <TYPE>character</TYPE>
             <DATATYPE>string</DATATYPE>
             <LENGTH>200</LENGTH>
