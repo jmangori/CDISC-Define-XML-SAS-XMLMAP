@@ -1,21 +1,38 @@
-/***********************************************************************************************/
-/* Description: Remove all premissable variables witout contents                               */
-/*              Preserve dataset and variable attributes                                       */
-/***********************************************************************************************/
-/* Disclaimer:  This program is the sole property of LEO Pharma A/S and may not be copied or   */
-/*              made available to any third party without prior written consent from the owner */
-/***********************************************************************************************/
+/***********************************************************************************/
+/* Description: Remove all premissable variables witout contents                   */
+/*              Preserve dataset and variable attributes                           */
+/***********************************************************************************/
+/*  Copyright (c) 2020 Jørgen Mangor Iversen                                       */
+/*                                                                                 */
+/*  Permission is hereby granted, free of charge, to any person obtaining a copy   */
+/*  of this software and associated documentation files (the "Software"), to deal  */
+/*  in the Software without restriction, including without limitation the rights   */
+/*  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      */
+/*  copies of the Software, and to permit persons to whom the Software is          */
+/*  furnished to do so, subject to the following conditions:                       */
+/*                                                                                 */
+/*  The above copyright notice and this permission notice shall be included in all */
+/*  copies or substantial portions of the Software.                                */
+/*                                                                                 */
+/*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     */
+/*  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       */
+/*  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    */
+/*  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         */
+/*  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  */
+/*  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  */
+/*  SOFTWARE.                                                                      */
+/***********************************************************************************/
 
 %macro define_emptydel(metalib =metalib, /* metadata libref          */
                        standard=,        /* standard (sdtm/adam/crf) */
                        dataset =,        /* dataset to proccess      */
-                       debug   =);       /* Not blank preserves WORK */
-  %put MACRO:    &sysmacroname;
-  %put METALIB:  &metalib;
-  %put STANDARD: &standard;
-  %put DATASET:  &dataset;
-  %if %nrquote(&debug) ne %then
-  %put DEBUG:    &debug;
+                       debug   =);       /* If any value, no clean up */
+  %if %nrquote(&debug) ne %then %do;
+    %put MACRO:    &sysmacroname;
+    %put METALIB:  &metalib;
+    %put STANDARD: &standard;
+    %put DATASET:  &dataset;
+  %end;
 
   /* Validate parameters and set up default values */
   %if "&metalib" = ""                        %then %let metalib = metalib;
@@ -170,8 +187,9 @@
 %mend define_emptydel;
 
 /*
-libname metalib       "&_SASWS_./leo/clinical/lp9999/8888/metadata/data";
-libname adam          "&_SASWS_./leo/clinical/lp9999/8888/adam/data";
-%define_datasets(standard=adam, dataset=adsl, inlib=sdtm, outlib=adam, emptydel=N, pgmpath=%str(/leo/clinical/lp9999/8888/adam/programs));
+Test statements:
+libname metalib "C:\temp\metadata";
+libname adam    "C:\adam\data";
+%define_datasets(standard=adam, dataset=adsl, inlib=sdtm, outlib=adam, emptydel=N, pgmpath=%str(C:\adam\programs));
 %define_emptydel(metalib=metalib,standard=adam,dataset=adam.adsl);
 */
