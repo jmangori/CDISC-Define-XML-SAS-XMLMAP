@@ -1,11 +1,31 @@
-/***********************************************************************************************/
-/* Description: Create well formed datasets from metadata according to a CDISC define-xml      */
-/*              document. Like named CDISC datasets are used as inputs. If no input dataset,   */
-/*              an empty dataset is created. Programs expect <dataset>_in & <dataset>_out names*/
-/***********************************************************************************************/
-/* Disclaimer:  This program is the sole property of LEO Pharma A/S and may not be copied or   */
-/*              made available to any third party without prior written consent from the owner */
-/***********************************************************************************************/
+/***********************************************************************************/
+/* Description: Create well formed datasets from metadata according to a CDISC     */          
+/*              define-xml document. Like-named CDISC datasets are used as inputs. */
+/*              If no input dataset, an empty dataset is created. If a program     */
+/*              exists "&pgmpath/<dataset>.sas", the program is %included.         */
+/*              Programs can read from raw.<dataset> without issuing a libname     */
+/*              statement. Programs are expected to deliver work.<dataset>         */
+/***********************************************************************************/
+/*  Copyright (c) 2020 Jørgen Mangor Iversen                                       */
+/*                                                                                 */
+/*  Permission is hereby granted, free of charge, to any person obtaining a copy   */
+/*  of this software and associated documentation files (the "Software"), to deal  */
+/*  in the Software without restriction, including without limitation the rights   */
+/*  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      */
+/*  copies of the Software, and to permit persons to whom the Software is          */
+/*  furnished to do so, subject to the following conditions:                       */
+/*                                                                                 */
+/*  The above copyright notice and this permission notice shall be included in all */
+/*  copies or substantial portions of the Software.                                */
+/*                                                                                 */
+/*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     */
+/*  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       */
+/*  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    */
+/*  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         */
+/*  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  */
+/*  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  */
+/*  SOFTWARE.                                                                      */
+/***********************************************************************************/
 
 %include "%str(&_SASWS_./leo/development/library/utilities/relpath.sas)";
 %include "%str(&_SASWS_./leo/development/library/utilities/repo_ws_exists.sas)";
@@ -23,7 +43,8 @@
                        emptydel=Y,       /* remove empty variables   */
                        xptpath =,        /* XPT path, if any         */
                        pgmpath =,        /* folder of dataset pgms   */
-                       debug   =);       /* Not blank preserves WORK */
+                       debug   =);       /* If any value, no clean up */
+  %if %nrquote(&debug) ne %then %do;
   %put MACRO:    &sysmacroname;
   %put METALIB:  &metalib;
   %put STANDARD: &standard;
@@ -36,8 +57,7 @@
   %put EMPTYDEL: &emptydel;
   %put XPTPATH:  &xptpath;
   %put PGMPATH:  &pgmpath;
-  %if %nrquote(&debug) ne %then
-  %put DEBUG:    &debug;
+  %end;
 
   /* Validate parameters and set up default values */
   %if %nrquote(&metalib) =                 %then %let metalib = metalib;
@@ -143,12 +163,12 @@
 
   /* Build a datastep for each dataset in metadata */
   /* If a program exists having the same name as the dataset, it is included BEFORE creation of the dataset */
-  proc sort data=&metalib..&standard._datasets out=_datasets;
+  proc sort data=&metalib..&standard._datasets out=_datasets_;
     by comment dataset;
   run;
 
   data _null_;
-    set _datasets;
+    set _datasets_;
     by comment dataset;
     %if %nrquote(&dataset) ne %then
       where upcase(dataset) = upcase("&dataset");;
@@ -197,6 +217,8 @@
       put '%dataset_test(' dataset +(-1) ');';
       pgmdata = cats(', indata=work.', dataset);
     end;
+    else
+      pgmdata = indata;
 
     /* Call the macro to generate one dataset */    
     put '%' "define_dataset(metalib=&metalib, standard=&standard, dataset=" dataset +(-1)
@@ -216,7 +238,7 @@
     filename &catrefx clear;
  
     proc datasets lib=work nolist;
-      delete _innames_ _pgmnames_ _xptnames_;
+      delete _innames_ _pgmnames_ _xptnames_ _datasets_;
     quit;
   %end;
   %else %do;
@@ -231,9 +253,10 @@
   %end;
 %mend define_datasets;
 /*
-libname metalib       "&_SASWS_./leo/clinical/lp9999/8888/metadata/data";
-libname sdtm          "&_SASWS_./leo/clinical/lp9999/8888/sdtm/data";
-%define_datasets(standard=sdtm, inpath=%str(/leo/clinical/lp9999/8888/received/raw), outlib=sdtm, pgmpath=%str(/leo/clinical/lp9999/8888/sdtm/programs));
-libname adam          "&_SASWS_./leo/clinical/lp9999/8888/adam/data";
-%define_datasets(standard=adam, dataset=adsl, inlib=sdtm, outlib=adam, emptydel=N, pgmpath=%str(/leo/clinical/lp9999/8888/adam/programs));
+Test statements:
+libname metalib "C:\temp\metadata";
+libname sdtm    "C:\sdtm";
+%define_datasets(standard=sdtm, inpath=%str(C:\raw), outlib=sdtm, pgmpath=%str(C:\sdtm\programs));
+libname adam    "C:\adam";
+%define_datasets(standard=adam, dataset=adsl, inlib=sdtm, outlib=adam, emptydel=N, pgmpath=%str(C:\adam\programs));
 */
