@@ -2,7 +2,7 @@
 /* Study:         Standard program                                                 */
 /* Program Name:  define_2_0_0.sas                                                 */
 /* Description:   Convert a standard CDISC define-xml file to SAS datasets         */
-/*                Works for any define.xml, both SDTM and ADaM                     */
+/*                Works for any define-xml, both SDTM and ADaM                     */
 /*                Creates datasets in METALIB prefixed by <standard>_ extracted    */
 /*                from first delimited word of define-xml XPATH location:          */
 /*                  /ODM/Study/MetaDataVersion/@def:StandardName                   */
@@ -30,11 +30,14 @@
 
 %macro define_2_0_0(metalib=metalib,                  /* metadata libref           */
                     define =,                         /* define-xml with full path */
-                    xmlmap =%str(define_2_0_0.map));  /* XML Map with full path    */
+                    xmlmap = %str(define_2_0_0.map), /* XML Map with full path    */
+                    debug  = );                      /* If any value, no clean up */
+  %if %nrquote(&debug) ne %then %do;
   %put MACRO:   &sysmacroname;
   %put METALIB: &metalib;
   %put DEFINE:  &define;
   %put XMLMAP:  &xmlmap;
+  %end;
 
   /* Print a message to the log and terminate macro execution */
   %macro panic(msg);
@@ -386,9 +389,11 @@
   quit;
 
   /* Cleanup WORK */
-  proc datasets lib=work nolist;
-    delete _temp_:;
-  quit;
+  %if %nrquote(&debug) = %then %do;
+    proc datasets lib=work nolist;
+      delete _temp_:;
+    quit;
+  %end;
 %mend;
 
 /*
