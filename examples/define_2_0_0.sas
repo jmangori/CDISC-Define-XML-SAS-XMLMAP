@@ -1,42 +1,22 @@
-﻿/***********************************************************************************/
-/* Study:         Standard program                                                 */
-/* Program Name:  define_2_0_0.sas                                                 */
-/* Description:   Convert a standard CDISC define-xml file to SAS datasets         */
-/*                Works for any define-xml, both SDTM and ADaM                     */
-/*                Creates datasets in METALIB prefixed by <standard>_ extracted    */
-/*                from first delimited word of define-xml XPATH location:          */
-/*                  /ODM/Study/MetaDataVersion/@def:StandardName                   */
-/***********************************************************************************/
-/*  Copyright (c) 2020 Jørgen Mangor Iversen                                       */
-/*                                                                                 */
-/*  Permission is hereby granted, free of charge, to any person obtaining a copy   */
-/*  of this software and associated documentation files (the "Software"), to deal  */
-/*  in the Software without restriction, including without limitation the rights   */
-/*  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      */
-/*  copies of the Software, and to permit persons to whom the Software is          */
-/*  furnished to do so, subject to the following conditions:                       */
-/*                                                                                 */
-/*  The above copyright notice and this permission notice shall be included in all */
-/*  copies or substantial portions of the Software.                                */
-/*                                                                                 */
-/*  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     */
-/*  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       */
-/*  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    */
-/*  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         */
-/*  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  */
-/*  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  */
-/*  SOFTWARE.                                                                      */
-/***********************************************************************************/
+/***********************************************************************************************/
+/* Description: Convert a standard CDISC define.xml file to SAS. Works for any define-xml,     */
+/*              both SDTM and ADaM. Creates datasets in METALIB prefixed by <standard>_        */
+/*              extracted from first delimited word of XPATH:                                  */
+/*                 /ODM/Study/MetaDataVersion/@def:StandardName                                */
+/***********************************************************************************************/
+/* Disclaimer:  This program is the sole property of LEO Pharma A/S and may not be copied or   */
+/*              made available to any third party without prior written consent from the owner */
+/***********************************************************************************************/
 
-%macro define_2_0_0(metalib=metalib,                  /* metadata libref           */
-                    define =,                         /* define-xml with full path */
+%macro define_2_0_0(metalib=metalib,                 /* metadata libref           */
+                    define =,                        /* define-xml with full path */
                     xmlmap = %str(define_2_0_0.map), /* XML Map with full path    */
                     debug  = );                      /* If any value, no clean up */
   %if %nrquote(&debug) ne %then %do;
-  %put MACRO:   &sysmacroname;
-  %put METALIB: &metalib;
-  %put DEFINE:  &define;
-  %put XMLMAP:  &xmlmap;
+    %put MACRO:   &sysmacroname;
+    %put METALIB: &metalib;
+    %put DEFINE:  &define;
+    %put XMLMAP:  &xmlmap;
   %end;
 
   /* Print a message to the log and terminate macro execution */
@@ -275,11 +255,11 @@
       join define.Itemdef             var
         on val.ItemOID = var.OID
       join define.Itemgroupdefitemref rel
-        on rel.ItemOID = catx('.', scan(var.oid, 1, '.'), scan(var.oid, 2, '.'), scan(var.oid, 3, '.'))
+        on rel.ItemOID = catx('.', scan(var.oid, 1, '.'), scan(var.oid, 2, '.'))
       join define.Itemgroupdef        dsn
         on rel.OID = dsn.OID
       left join define.Itemdef        des
-        on catx('.', 'IG', dsn.Name, var.SASFieldName) = var.OID
+        on catx('.', dsn.Name, var.SASFieldName) = var.OID
       left join define.Codelist       cdl
         on var.CodeListOID = cdl.OID
       left join _temp_origin          pag
@@ -397,12 +377,19 @@
 %mend;
 
 /*
-Test statements:
-libname metalib "C:\temp\metadata";
-%define_2_0_0(define = %str(C:\temp\metadata\SDTM Define-XML 2.0.xml),
-             xmlmap  = %str(C:\temp\metadata\define_2_0_0.map));
-%define_2_0_0(define = %str(C:\temp\metadata\ADaM Define-XML 2.0.xml),
-             xmlmap  = %str(C:\temp\metadata\define_2_0_0.map));
+LSAF:
+libname metalib "&_SASWS_./leo/clinical/lp9999/8888/metadata/data";
+%define_2_0_0(define = %str(&_SASWS_./leo/clinical/lp9999/8888/metadata/SDTM Define-XML 2.0 with CDISC Stylesheet.xml),
+              xmlmap = %str(&_SASWS_./leo/development/library/metadata/define_2_0_0.map));
+%define_2_0_0(define = %str(&_SASWS_./leo/clinical/lp9999/8888/metadata/ADaM Define-XML 2.0 with CDISC Stylesheet.xml),
+              xmlmap = %str(&_SASWS_./leo/development/library/metadata/define_2_0_0.map));
+
+SAS:
+libname metalib "X:\Users\leo0jxm\metadata";
+%define_2_0_0(define = %str(X:\Users\leo0jxm\metadata\SDTM Define-XML 2.0.xml),
+             xmlmap  = %str(X:\Users\leo0jxm\metadata\define_2_0_0.map));
+%define_2_0_0(define = %str(X:\Users\leo0jxm\metadata\ADaM Define-XML 2.0.xml),
+             xmlmap  = %str(X:\Users\leo0jxm\metadata\define_2_0_0.map));
 
 proc copy in=define out=work;run;
 */
