@@ -235,6 +235,7 @@
 
     /* Itemgroupdefitemref lags a proper key to Itemdef for transposed variables in SUPPQUAL */
     create table &metalib..&standard._valuelevel as select distinct
+           val.ItemOID,
            val.OrderNumber       as Order,
            dsn.Name              as Dataset,
            var.SASFieldName      as Variable,
