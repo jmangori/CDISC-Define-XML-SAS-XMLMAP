@@ -4,8 +4,27 @@
 /*              extracted from first delimited word of XPATH:                                  */
 /*                 /ODM/Study/MetaDataVersion/@def:StandardName                                */
 /***********************************************************************************************/
-/* Disclaimer:  This program is the sole property of LEO Pharma A/S and may not be copied or   */
-/*              made available to any third party without prior written consent from the owner */
+/*
+  Copyright (c) 2020-2023 Jørgen Mangor Iversen
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+*/
 /***********************************************************************************************/
 
 %macro define_2_0_0(metalib=metalib,                 /* metadata libref           */
@@ -214,7 +233,7 @@
            SignificantDigits as Significant_Digits,
            DisplayFormat     as Format,
            Mandatory,
-           cdl.Name          as Codelist,
+           CodeListOID       as Codelist,
            OriginType        as Origin,
            Pages,
            MethodOID         as Method,
@@ -226,52 +245,42 @@
         on rel.OID = dsn.OID
       join define.Itemdef             var
         on rel.ItemOID = var.OID
-      left join define.Codelist       cdl
-        on CodeListOID = cdl.OID
       left join _temp_origin          pag
         on var.OID = pag.OID
      order by Dataset,
            Order;
 
     /* Itemgroupdefitemref lags a proper key to Itemdef for transposed variables in SUPPQUAL */
-    create table &metalib..&standard._valuelevel as select distinct
+    create table &metalib..&standard._ValueLevel as select distinct
            val.ItemOID,
-           val.OrderNumber       as Order,
-           dsn.Name              as Dataset,
-           var.SASFieldName      as Variable,
-           WhereClauseOID        as Where_Clause,
-           des.Description,
-           var.DataType          as Data_Type,
+           val.OrderNumber           as Order,
+           scan(val.ItemOID, 1, '.') as Dataset,
+           scan(val.ItemOID, 2, '.') as Variable,
+           WhereClauseOID            as Where_Clause,
+           var.Description,
+           var.DataType              as Data_Type,
            var.Length,
-           var.SignificantDigits as Significant_Digits,
-           var.DisplayFormat     as Format,
+           var.SignificantDigits     as Significant_Digits,
+           var.DisplayFormat         as Format,
            val.Mandatory,
-           cdl.Name              as Codelist,
-           var.OriginType        as Origin,
+           var.CodeListOID           as Codelist,
+           var.OriginType            as Origin,
            Pages,
-           val.MethodOID         as Method,
+           val.MethodOID             as Method,
            var.Predecessor,
-           var.CommentOID        as Comment
+           var.CommentOID            as Comment
       from define.Valuelistdef        val
       join define.Itemdef             var
         on val.ItemOID = var.OID
-      join define.Itemgroupdefitemref rel
-        on rel.ItemOID = catx('.', scan(var.oid, 1, '.'), scan(var.oid, 2, '.'))
-      join define.Itemgroupdef        dsn
-        on rel.OID = dsn.OID
-      left join define.Itemdef        des
-        on catx('.', dsn.Name, var.SASFieldName) = var.OID
-      left join define.Codelist       cdl
-        on var.CodeListOID = cdl.OID
       left join _temp_origin          pag
-        on rel.ItemOID = pag.OID
+        on val.ItemOID = pag.OID
      order by Dataset,
            Variable,
            Order,
            Where_Clause;
 
     /* P21 lags logical operators (and/or). CheckValues has a different cardinality */
-    create table &metalib..&standard._whereclauses as select distinct
+    create table &metalib..&standard._WhereClauses as select distinct
            whe.OID    as ID,
            dsn.Name   as Dataset,
            var.Name   as Variable,
@@ -315,7 +324,7 @@
 
     /* Straight forward */
     create table &metalib..&standard._Dictionaries as select distinct
-           OID as ID,
+           OID      as ID,
            Name,
            DataType as Data_Type,
            Dictionary,
