@@ -25,9 +25,9 @@
   %end;
 
   /* Validate parameters and set up default values */
-  %if %nrquote(&metalib) =  %then %let metalib=metalib;
-  %if %nrquote(&odm)     =  %then %panic(No odm-xml file specified in parameter ODM=.);
-  %if %nrquote(&xmlmap)  =  %then %panic(No XML Map file specified in the parameter XMLMAP=.);
+  %if %nrquote(&metalib) =               %then %let metalib=metalib;
+  %if %nrquote(&odm)     =               %then %panic(No odm-xml file specified in parameter ODM=.);
+  %if %nrquote(&xmlmap)  =               %then %panic(No XML Map file specified in the parameter XMLMAP=.);
   %if %sysfunc(libref(&metalib))         %then %panic(Metadata libref %upcase(&metalib) not found.);
   %if %sysfunc(fileexist("&odm"))    = 0 %then %panic(ODM-xml file "&odm" not found.);
   %if %sysfunc(fileexist("&xmlmap")) = 0 %then %panic(XMLMAP file "&xmlmap" not found.);
@@ -74,9 +74,10 @@
 
   /* ItemDefAlias contains SDTM annotations carrying dataset and variable names */
   %if %qsysfunc(exist(odm.ItemDefAlias)) %then %do;
-    data _temp_annotations (drop=Name _:) _tokens(keep=_token);
-      set odm.ItemDefAlias (keep=Name);
-      length dataset $ 8 variable $ 32 _token $ 5000;
+    data _temp_annotations (drop=Name Context _:)
+      %if %nrquote(&debug) ne %then %do; _tokens(keep=_token) %end;;
+      set odm.ItemDefAlias (keep=Name Context where=(Context='SDTM'));
+      length dataset $ 8 variable $ 32 _token _token_sub $ 5000;
       length OrderNumber 8 CodeListOID MethodOID RoleCodeListOID CollectionExceptionConditionOID Comment $ 200;
       retain OrderNumber . CodeListOID MethodOID RoleCodeListOID CollectionExceptionConditionOID Comment '';
 
@@ -84,15 +85,19 @@
       if index(Name, '=') = 0 then return;
 
       /* Break annotation into tokens separated by comma */
-      do _i = 1 to count(Name, ',') + 1;
-        _token = scan(Name, _i, ',', 'r');
-        output _tokens;
+      Name = translate(Name, '^', ',');
+      Name = tranwrd(Name, '. ', '^ ');
+      do _i = 1 to count(Name, '^') + 1;
+        _token = scan(Name, _i, '^', 'r');
+        %if %nrquote(&debug) ne %then %do; output _tokens; %end;
         select;
           /* Skip if no assignment operator in token */
-          when (index(_token, '=') = 0) leave;
+          when (index(_token, '=') = 0) do;
+            leave;
+          end;
 
           /* If a period is found in the first 9 characters, then token begins with dataset.variable */
-          when (index(substr(_token, 1, min(9, length(_token))), '.') and first(reverse(_token) ne '.')) do;
+          when (index(substr(_token, 1, min(9, length(_token))), '.') and first(reverse(_token)) ne '.') do;
             dataset  = left(scan(_token, 1, '.'));
             variable = left(scan(_token, 2, '.'));
             variable = substr(variable, 1, notalpha(variable) -1);
@@ -182,170 +187,142 @@
     run;
   %end;
 
-  /* Flatten ItemDef for variables having multiple attributes (codelists)
-  proc sort data=odm.Itemdef out=temp_Itemdef (keep=OID SDSVarName Origin CodeListOID Comment);
-    by    SDSVarName;
-    where SDSVarName ne '';
-  run;
-
-  data temp_Itemdef_flat (drop=_:);
-    set temp_Itemdef (rename=(OID=_OID Origin=_Origin CodelistOID=_CodeListOID Comment=_Comment));
-    by  SDSVarName;
-    length OID Origin CodeListOID $ 200 Comment $ 500;
-    retain OID Origin CodeListOID Comment '';
-    if first.SDSVarName then do;
-      OID         = '';
-      Origin      = '';
-      CodeListOID = '';
-      Comment      = '';
-    end;
-    OID         = catx(' ', OID,         _OID);
-    Origin      = catx(' ', Origin,      _Origin);
-    CodeListOID = catx(' ', CodeListOID, _CodeListOID);
-    Comment     = catx(' ', Comment,     _Comment);
-    if last.SDSVarName;
-  run; */
-
+  /*************************************/
   /* Prepare Formedix namespace tables */
+  /*************************************/
+  %let fdxformvars=;
   %if %qsysfunc(exist(odm.FormDefFormedix)) %then %do;
-    /* Make sure expected data exist by creating dummys */
-    data _temp_FormDefFormedix_fixvars;
-      set odm.FormDefFormedix;
-      output;
-      if _N_ = 1 then do;
-        MDVOID         = '';
-        OID            = '';
-        SetNamespace   = '';
-        SetDisplayName = '';
-        SetVersion     = .;
-        Value          = '';
-        Name           = 'HeaderStyle';
-        DisplayName    = Name;
-        output;
-        Name           = 'Title';
-        DisplayName    = Name;
-        output;
-        Name           = 'NotesTop';
-        DisplayName    = Name;
-        output;
-      end;
-    run;
-    proc sort data=_temp_FormDefFormedix_fixvars out=_temp_FormDefFormedix;
+    /* Prepare transpose */
+    proc sort data=odm.FormDefFormedix out=_temp_FormDefFormedix;
       by OID Name;
     run;
-    proc transpose data=_temp_FormDefFormedix out=_temp_FormDeffdx (where=(OID ne '') drop=_:);
+    /* Turn all value carrying rows into variables */
+    proc transpose data=_temp_FormDefFormedix out=_temp_FormDefFormedix_trans (where=(OID ne '') drop=_:);
       by      OID;
       id      Name;
       idlabel DisplayName;
       var     Value;
     run;
-    %if &sysnobs = 0 %then %do;
+    proc sql noprint;
+      /* Add namespace identifiers */
+      create table _temp_FormDeffdx as select distinct
+             fdt.*,
+             SetNamespace,
+             SetDisplayName,
+             SetVersion
+        from _temp_FormDefFormedix_trans fdt
+        left join odm.FormDefFormedix    odm
+          on fdt.OID = odm.OID;
+      %let formobs = &sqlobs;
+      /* Collect all ItemDef variables from fdx: namespace */
+      %if &formobs ne 0 %then %do;
+      select distinct translate(name, '__', '/-')
+        into :fdxformvars separated by ','
+        from dictionary.columns
+       where upcase(memname) = "_TEMP_FORMDEFFDX"
+         and upcase(name) ne 'OID';
+      %end;
+    quit;
+    %if %nrquote(&debug) ne %then
+      %put &=formobs;
+      %put &=fdxformvars;
+    %if &formobs = 0 %then %do;
       proc datasets lib=work nolist;
-        delete _temp_FormDefFormedix_fixvars _temp_FormDefFormedix _temp_FormDeffdx;
+        delete _temp_FormDefFormedix_trans _temp_FormDefFormedix _temp_FormDeffdx;
       quit;
     %end;
   %end;
-  
+
+  %let fdxitemvars=;
   %if %qsysfunc(exist(odm.ItemDefFormedix)) %then %do;
-    /* Make sure expected data exist by creating dummys */
-    data _temp_ItemDefFormedix_fixvars;
-      set odm.ItemDefFormedix;
-      output;
-      if _N_ = 1 then do;
-        MDVOID         = '';
-        OID            = '';
-        SetNamespace   = '';
-        SetDisplayName = '';
-        SetVersion     = .;
-        Value          = '';
-        Name           = 'DesignNotes';
-        DisplayName    = Name;
-        output;
-        Name           = 'Notes';
-        DisplayName    = Name;
-        output;
-        Name           = 'Display';
-        DisplayName    = Name;
-        output;
-      end;
-    run;
-    proc sort data=_temp_ItemDefFormedix_fixvars out=_temp_ItemDefFormedix;
+    /* Prepare transpose */
+    proc sort data=odm.ItemDefFormedix out=_temp_ItemDefFormedix;
       by OID Name;
     run;
-    proc transpose data=_temp_ItemDefFormedix out=_temp_ItemDeffdx (where=(OID ne '') drop=_:);
+    /* Turn all value carrying rows into variables */
+    proc transpose data=_temp_ItemDefFormedix out=_temp_ItemDeffdx_trans (where=(OID ne '') drop=_:);
       by      OID;
       id      Name;
       idlabel DisplayName;
       var     Value;
     run;
-    %if &sysnobs = 0 %then %do;
+    proc sql noprint;
+      /* Add namespace identifiers */
+      create table _temp_ItemDeffdx as select distinct
+             fdt.*,
+             SetNamespace,
+             SetDisplayName,
+             SetVersion
+        from _temp_ItemDeffdx_trans fdt
+        left join odm.ItemDefFormedix    odm
+          on fdt.OID = odm.OID;
+      %let questobs = &sqlobs;
+      /* Collect all ItemDef variables from fdx: namespace */
+      %if &questobs ne 0 %then %do;
+      select distinct translate(name, '__', '/-')
+        into :fdxitemvars separated by ','
+        from dictionary.columns
+       where upcase(memname) = "_TEMP_ITEMDEFFDX"
+         and upcase(name) ne 'OID';
+      %end;
+    quit;
+    %if %nrquote(&debug) ne %then
+      %put &=questobs;
+      %put &=fdxitemvars;
+    %if &questobs = 0 %then %do;
       proc datasets lib=work nolist;
-        delete _temp_ItemDefFormedix_fixvars _temp_ItemDefFormedix _temp_ItemDeffdx;
+        delete _temp_ItemDefFormedix_trans _temp_ItemDefFormedix _temp_ItemDeffdx;
       quit;
     %end;
   %end;
-  
-  %if %qsysfunc(exist(odm.CodeListFormedix)) %then %do;
-    /* Make sure expected data exist by creating dummys */
-    data _temp_CodeListFormedix_fixvars;
-      set odm.CodeListFormedix;
-      output;
-      if _N_ = 1 then do;
-        MDVOID         = '';
-        OID            = '';
-        SetNamespace   = '';
-        SetDisplayName = '';
-        SetVersion     = .;
-        Value          = '';
-        Name           = 'ExtCodeID';
-        DisplayName    = Name;
-        output;
-        Name           = 'CodeListExtensible';
-        DisplayName    = Name;
-        output;
-        Name           = 'CodeListDescription';
-        DisplayName    = Name;
-        output;
-        Name           = 'PreferredTerm';
-        DisplayName    = Name;
-        output;
-        Name           = 'CDISCSubmissionValue';
-        DisplayName    = Name;
-        output;
-        Name           = 'CDISCSynonym';
-        DisplayName    = Name;
-        output;
-        Name           = 'StandardName';
-        DisplayName    = Name;
-        output;
-        Name           = 'StandardVersion';
-        DisplayName    = Name;
-        output;
-      end;
-    run;
+
+  %let fdxclvars=;
+  %if %qsysfunc(exist(odm.CodeListFormedix)) = 2 %then %do; /* Candidate for removal */
+    /* Prepare transpose */
     proc sort data=_temp_CodeListFormedix_fixvars out=_temp_CodeListFormedix;
       by OID Name;
     run;
+    /* Turn all value carrying rows into variables */
     %if &sysnobs > 0 %then %do;
-      proc transpose data=_temp_CodeListFormedix out=_temp_CodeListfdx (drop=_:);
+      proc transpose data=_temp_CodeListFormedix out=_temp_CodeListfdx_trans (drop=_:);
         by      OID;
         id      Name;
         idlabel DisplayName;
         var     Value;
       run;
+      proc sql;
+        /* Add namespace identifiers */
+        create table _temp_CodeListfdx as select distinct
+               fdt.*,
+               SetNamespace,
+               SetDisplayName,
+               SetVersion
+          from _temp_CodeListfdx_trans   fdt
+          left join odm.CodeListFormedix odm
+            on fdt.OID = odm.OID;
+        /* Collect all ItemDef variables from fdx: namespace */
+        select distinct translate(name, '__', '/-')
+          into :fdxclvars separated by ','
+          from dictionary.columns
+         where upcase(memname) = "_TEMP_CODELISTFDX"
+           and upcase(name) ne 'OID';
+      quit;
+      %if %nrquote(&debug) ne %then
+        %put &=fdxclvars;
     %end;
     %else %do;
       proc datasets lib=work nolist;
-        delete _temp_CodeListFormedix_fixvars _temp_CodeListFormedix;
+        delete _temp_CodeListFormedix_trans _temp_CodeListFormedix;
       quit;
     %end;
   %end;
- 
-  %if %qsysfunc(exist(odm.CodeListItemFormedix)) %then %do;
+
+  %let fdxclitemvars=;
+  %if %qsysfunc(exist(odm.CodeListItemFormedix)) = 2 %then %do; /* Candidate for removal */
     /* Handle multiple Values for Custom Attributes. Concatenate separated by semicolon */
     proc sort data=odm.CodeListItemFormedix out=_temp_CodeListItemFormedix;
       by MDVOID OID CodedValue Namespace NamespaceDisplayName Version Name DisplayName;
-    run;    
+    run;
     proc transpose data=_temp_CodeListItemFormedix out=_temp_CodeListItemFormedix_mval (drop=_:);
       by  MDVOID OID CodedValue Namespace NamespaceDisplayName Version Name DisplayName;
       var Value;
@@ -367,45 +344,41 @@
         Value = catx(';', Value, col[coli]);
       end;
     run;
-    /* Make sure expected data exist by creating dummys */
-    data _temp_CLItemFormedix_fixvars;
-      set _temp_CLItemFormedix_mval;
-      output;
-      if _N_ = 1 then do;
-        MDVOID               = '';
-        OID                  = '';
-        Namespace            = '';
-        NamespaceDisplayName = '';
-        Version              = .;
-        Value                = '';
-        Name                 = 'ExtCodeID';
-        DisplayName          = Name;
-        output;
-        Name                 = 'CDISCDefinition';
-        DisplayName          = Name;
-        output;
-        Name                 = 'PreferredTerm';
-        DisplayName          = Name;
-        output;
-        Name                 = 'CDISCSynonym';
-        DisplayName          = Name;
-        output;
-      end;
-    run;
-    proc sort data=_temp_CLItemFormedix_fixvars out=_temp_CodeListItemFormedix;
+    /* Prepare transpose */
+    proc sort data=_temp_CLItemFormedix_mval out=_temp_CodeListItemFormedix;
       by OID CodedValue Name;
     run;
     %if &sysnobs > 0 %then %do;
-      proc transpose data=_temp_CodeListItemFormedix out=_temp_CodeListItemfdx (drop=_:);
+      /* Turn all value carrying rows into variables */
+      proc transpose data=_temp_CodeListItemFormedix out=_temp_CodeListItemfdx_trans (drop=_:);
         by      OID CodedValue;
         id      Name;
         idlabel DisplayName;
         var     Value;
       run;
+      proc sql;
+        /* Add namespace identifiers */
+        create table _temp_CodeListItemfdx as select distinct
+               fdt.*,
+               SetNamespace,
+               SetDisplayName,
+               SetVersion
+          from _temp_CodeListfdx_trans   fdt
+          left join odm.CodeListFormedix odm
+            on fdt.OID = odm.OID;
+        /* Collect all ItemDef variables from fdx: namespace */
+        select distinct translate(name, '__', '/-')
+          into :fdxclitemvars separated by ','
+          from dictionary.columns
+         where upcase(memname) = "_TEMP_CODELISTITEMFDX"
+           and upcase(name) ne 'OID';
+      quit;
+      %if %nrquote(&debug) ne %then
+        %put &=fdxclitemvars;
     %end;
     %else %do;
       proc datasets lib=work nolist;
-        delete _temp_CodeListItemFormedix_fixvars _temp_CodeListItemFormedix;
+        delete _temp_CodeListItemFormedix_trans _temp_CodeListItemFormedix;
       quit;
     %end;
   %end;
@@ -480,12 +453,16 @@
   %end;
 
     /* Very simple list of datasets from annotations */
-  %if %qsysfunc(exist(odm.Itemgroupdef)) %then %do;
+  %if %qsysfunc(exist(odm.ItemGroupDef)) and  %qsysfunc(exist(odm.ItemDef)) %then %do;
     create table &metalib..&standard._Datasets as select distinct
            Domain as Dataset
       from odm.ItemGroupDef (where=(Domain ne ''))
-     union select distinct Dataset
+     union select distinct
+           Dataset
       from _temp_annotations (where=(Dataset ne ''))
+     union select distinct
+           scan(SDSVarName, 1, '.') as Dataset
+      from odm.ItemDef (where=(SDSVarName ne '' and index(SDSVarName, '.')))
      order by Dataset;
 
     %if &sqlobs = 0 %then %do;
@@ -525,8 +502,10 @@
   %if %qsysfunc(exist(odm.ItemGroupDefItemRef)) %then %do;
     create table _temp_variables as select distinct
            var.OID,
-           dsn.Domain        as Dataset,
-           var.SDSVarName    as Variable,
+           coalesce(dsn.Domain, scan(var.SDSVarName, 1, '.')) as Dataset,
+           case when index(var.SDSVarName, '.') then scan(var.SDSVarName, 2, '.')
+                else var.SDSVarName
+           end as Variable,
            CodeListOID,
            MethodOID,
            var.Comment
@@ -535,7 +514,7 @@
         on rel.OID = dsn.OID
       join odm.ItemDef             var
         on rel.ItemOID = var.OID
-     where Variable ne ''
+     where calculated Variable ne ''
       order by Dataset, Variable;
 
     %if &sqlobs = 0 %then %do;
@@ -555,14 +534,8 @@
            coalescec(itm.Alias, enu.Alias)            as NCI_Term_Code,
            cll.Description,
            cil.Decode                                 as Decoded_Value
-         %if %sysfunc(exist(_temp_CodeListfdx)) %then %do;
-           ,
-           fdx.ExtCodeID,
-           fdx.CodeListExtensible,
-           fdx.CodeListDescription,
-           fdx.PreferredTerm,
-           fdx.CDISCSubmissionValue,
-           fdx.CDISCSynonym
+         %if %nrquote(&fdxclvars) ne %then %do;
+           , &fdxclvars
          %end;
          %if %sysfunc(exist(_temp_CodeListItemfdx)) %then %do;
            ,
@@ -636,11 +609,8 @@
            fda.Name as FormAlias,
            fal.PdfFileName,
            fal.PresentationOID
-         %if %sysfunc(exist(_temp_FormDeffdx)) %then %do;
-           ,
-           fdx.Title,
-           fdx.DesignNotes,
-           fdx.NotesTop
+         %if %nrquote(&fdxformvars) ne %then %do;
+           ,&fdxformvars
          %end;
       from odm.FormDef                   fmd
       left join odm.FormDefAlias         fda
@@ -676,6 +646,7 @@
            igr.Mandatory,
            imd.Name,
            DataType,
+           Length,
            SDSVarName,
            itl.Description,
            qul.Description as Question,
@@ -685,11 +656,8 @@
            CodeListOID,
            Context,
            ida.Name as Alias
-         %if %sysfunc(exist(_temp_ItemDeffdx)) %then %do;
-           ,
-           fdx.DesignNotes,
-           fdx.Notes,
-           fdx.Display
+         %if %nrquote(&fdxitemvars) ne %then %do;
+           ,&fdxitemvars
          %end;
       from odm.FormDefItemGroupRef fgr
       join odm.ItemGroupDefItemRef igr
@@ -781,12 +749,20 @@
     data _temp_variables_all;
       set _temp_variables _temp_annotations (keep=Dataset Variable CodelistOID MethodOID Comment);
       by Dataset Variable;
+      if index(Variable, '.') then do;
+        Dataset  = scan(Variable, 1, '.');
+        Variable = scan(Variable, 2, '.');
+      end;
     run;
-  
+
+    proc sort data=_temp_variables_all;
+      by Dataset Variable;
+    run;
+
     data &metalib..&standard._Variables (drop=_:);
       set _temp_variables_all (rename=(OID=_OID CodelistOID=_CodeListOID MethodOID=_MethodOID Comment=_Comment));
       by  Dataset Variable;
-      length OID CodeListOID MethodOID Comment $ 500;
+      length OID CodeListOID MethodOID Comment $ 2000;
       retain OID CodeListOID MethodOID Comment '';
       if first.Variable then do;
         OID         = '';
@@ -816,11 +792,12 @@
 /*
 LSAF:
 libname metalib "&_SASWS_./leo/clinical/lp9999/8888/metadata/data";
-%odm_1_3_2(odm = %str(&_SASWS_./leo/clinical/lp9999/8888/metadata/CDISC_ODM_1.3.2_visit.xml),
+%odm_1_3_2(metalib=work,
+               odm = %str(&_SASWS_./leo/clinical/lp9999/8888/metadata/2240 CRF Version 2 Draft.xml),debug=x,
            xmlmap = %str(&_SASWS_./leo/development/library/metadata/odm_1_3_2_formedix.map));
 
 %odm_1_3_2(metalib=work,
-               odm=%str(&_SASWS_./leo/clinical/lp9999/8888/metadata/1401 Version 7 Draft.xml),
+               odm=%str(&_SASWS_./leo/clinical/lp9999/8888/metadata/1401 CRF Version 10 Production.xml),
             xmlmap=%str(&_SASWS_./leo/development/library/metadata/odm_1_3_2_formedix.map), debug=n);
 %odm_1_3_2(metalib=work,
                odm=%str(&_SASWS_./leo/clinical/lp9999/8888/metadata/LP0133-1401 - Metdata Version 297.xml),
@@ -828,4 +805,10 @@ libname metalib "&_SASWS_./leo/clinical/lp9999/8888/metadata/data";
 %odm_1_3_2(metalib=work,
                odm=%str(&_SASWS_./leo/clinical/lp9999/8888/metadata/ct/nci_ct_v4.xml),debug=x,
             xmlmap=%str(&_SASWS_./leo/development/library/metadata/odm_1_3_2_formedix.map));
- */     
+%odm_1_3_2(metalib=work,
+               odm=%str(&_SASWS_./leo/clinical/lp9999/8888/metadata/ROCS 1401 ODM 1.3.2.xml),debug=x,
+            xmlmap=%str(&_SASWS_./leo/development/library/metadata/odm_1_3_2_formedix.map));
+%odm_1_3_2(metalib=work,
+               odm=%str(&_SASWS_./leo/clinical/lp9999/8888/metadata/Veeva 1426 ODM 1.3.2.xml),debug=x,
+            xmlmap=%str(&_SASWS_./leo/development/library/metadata/odm_1_3_2_formedix.map));
+*/
