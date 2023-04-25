@@ -315,14 +315,14 @@
             <LENGTH>200</LENGTH>
         </COLUMN>
 
-        <COLUMN name="RoleCodeListOID" retain="YES">
+        <COLUMN name="RoleCodeListOID">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/def:ValueListDef/ItemRef/@RoleCodeListOID</PATH>
             <TYPE>character</TYPE>
             <DATATYPE>string</DATATYPE>
             <LENGTH>200</LENGTH>
         </COLUMN>
 
-        <COLUMN name="MethodOID" retain="YES">
+        <COLUMN name="MethodOID">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/def:ValueListDef/ItemRef/@MethodOID</PATH>
             <TYPE>character</TYPE>
             <DATATYPE>string</DATATYPE>
