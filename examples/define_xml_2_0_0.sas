@@ -495,7 +495,6 @@ libname metalib "X:\Users\jmi\metadata";
 
 %define_xml_2_0_0(define = %str(X:\Users\jmi\metadata\sdtm\&study._define.xml),
                 standard = SDTM,
-                 xmlmap  = %str(X:\Users\jmi\metadata\define_2_0_0.map),
                  FileOID = define_&study.,
             SourceSystem = define_xml_2_0_0,
                 StudyOID = SDY_&study.,
@@ -503,7 +502,6 @@ libname metalib "X:\Users\jmi\metadata";
 
 %define_xml_2_0_0(define = %str(X:\Users\jmi\metadata\adam\&study._define.xml),
                 standard = ADaM,
-                 xmlmap  = %str(X:\Users\jmi\metadata\define_2_0_0.map),
                  FileOID = define_&study.,
             SourceSystem = define_xml_2_0_0,
                 StudyOID = SDY_&study.,
