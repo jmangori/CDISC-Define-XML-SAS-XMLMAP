@@ -1,30 +1,30 @@
 /***********************************************************************************************/
-/* Description: Convert a standard CDISC define.xml file to SAS. Works for any define-xml,     */
+/* Description: Convert a standard CDISC define-xml file to SAS. Works for any define-xml,     */
 /*              both SDTM and ADaM. Creates datasets in METALIB prefixed by <standard>_        */
 /*              extracted from first delimited word of XPATH:                                  */
-/*                 /ODM/Study/MetaDataVersion/@def:StandardName                                */
+/*              /ODM/Study/MetaDataVersion/@def:StandardName                                   */
 /***********************************************************************************************/
-/*
-  Copyright (c) 2020-2023 Jørgen Mangor Iversen
-
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
-
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
-*/
+/* MIT License                                                                                 */
+/*                                                                                             */
+/* Copyright (c) 2020-2023 JÃ¸rgen Mangor Iversen                                               */
+/*                                                                                             */
+/* Permission is hereby granted, free of charge, to any person obtaining a copy                */
+/* of this software and associated documentation files (the "Software"), to deal               */
+/* in the Software without restriction, including without limitation the rights                */
+/* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell                   */
+/* copies of the Software, and to permit persons to whom the Software is                       */
+/* furnished to do so, subject to the following conditions:                                    */
+/*                                                                                             */
+/* The above copyright notice and this permission notice shall be included in all              */
+/* copies or substantial portions of the Software.                                             */
+/*                                                                                             */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR                  */
+/* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,                    */
+/* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE                 */
+/* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER                      */
+/* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,               */
+/* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE               */
+/* SOFTWARE.                                                                                   */
 /***********************************************************************************************/
 
 %macro define_2_0_0(metalib=metalib,                 /* metadata libref           */
@@ -71,13 +71,13 @@
   /* Collect all variables part of simple or compound keys */
   proc sql;
     create table _temp_KeySequence as select distinct
-           dsn.name as Dataset,
+           dsn.Name as Dataset,
            var.Name as Variable,
            KeySequence
-      from define.Itemgroupdefitemref rel
-      join define.Itemgroupdef        dsn
+      from define.ItemGroupDefItemRef rel
+      join define.ItemGroupDef        dsn
         on rel.OID = dsn.OID
-      join define.Itemdef             var
+      join define.ItemDef             var
         on rel.ItemOID = var.OID
      where KeySequence ne .
      order by Dataset,
@@ -95,39 +95,30 @@
     if last.Dataset;
   run;
 
-  /* Assemble all page refences into one combined variable */
+  /* Assemble all page refences into one combined variable, separated by commas */
   %macro pages(in=, out=);
-  proc sort data=&in out=_temp_pages;
-    by OID;
-  run;
-
-  data &out (keep= OID Pages);
-    set _temp_pages;
-    by OID;
-    length Pages $ 500;
-    retain Pages '';
-    if first.OID then do;
-      Pages = '';
-      link pages;
-    end;
-    else link pages;
-    if last.OID;
-    return;
-  pages:
-      if PageRefs  ne '' then Pages = cats(Pages, PageRefs);
-      if PageRefs  ne '' and cats(FirstPage, LastPage) ne ''
-                         then Pages = cats(Pages, ',');
-      if FirstPage ne '' then Pages = cats(Pages, FirstPage);
-      if FirstPage ne '' and LastPage ne ''
-                         then Pages = cats(Pages, '-');
-      if LastPage  ne '' then Pages = cats(Pages, LastPage);
-  run;
+    proc sort data=&in out=_temp_pages;
+      by OID;
+    run;
+  
+    data &out (keep=OID Pages);
+      set _temp_pages;
+      by OID;
+      length Pages _pages $ 500;
+      retain Pages '';
+      if first.OID then
+        Pages = '';
+      if FirstPage ne '' and LastPage ne '' then
+        _pages = cats(FirstPage, '-', LastPage);
+      Pages = catx(',', Pages, _pages, PageRefs);
+      if last.OID;
+    run;
   %mend;
 
   /* Places where page refences are needed */
-  %pages(in=define.Itemdeforigin,         out=_temp_origin);
-  %pages(in=define.Methoddefdocumentref,  out=_temp_methods);
-  %pages(in=define.Commentdefdocumentref, out=_temp_comment);
+  %pages(in=define.ItemDefOrigin,         out=_temp_origin);
+  %pages(in=define.MethodDefDocumentRef,  out=_temp_methods);
+  %pages(in=define.CommentDefDocumentRef, out=_temp_comment);
 
   /* Obtain the length of the CheckValue variable, subject to change */
   %let CheckValue = 200;
@@ -140,59 +131,30 @@
        and upcase(name)    = 'CHECKVALUE';
   quit;
 
-  /* Calculate the cardinality of CheckValues. Missing indicates cardinality=1 */
+  /* Calculate the cardinality of CheckValues. */
   proc sql;
     create table _temp_cardinal as select distinct
-           OID,
-           ItemOID,
-           Comparator,
-           count(*) as Cardinality
+           '_tmp_card'                    as fmtname,
+           cats(OID, ItemOID, Comparator) as start,
+           count(*)                       as label,
+           'I'                            as type
       from define.WhereClauseDefCheckValue
-     group by OID,
-           ItemOID,
-           Comparator
-    having cardinality > 1;
-
-    create table _temp_cardinal_checkvalue as select distinct
-           wcl.*,
-           cardinality
-      from define.WhereClauseDefCheckValue wcl
-      left join _temp_cardinal             car
-        on wcl.OID        = car.OID
-       and wcl.ItemOID    = car.ItemOID
-       and wcl.Comparator = car.Comparator
-     order by wcl.OID,
-           wcl.ItemOID,
-           wcl.Comparator;
+     group by start;
   quit;
 
-  /* Resolve cardinality uniformally for cardinalities > 1                    */
-  /* NOTE: incorrect where clauses of VAR1 IN ('SENTENCE OF MORE WORDS')      */
-  /*       will be split into test for each word, not for the whole sentence. */
-  /*       use the EQ Comparator for that. The same applies for NOTIN.        */
-  data _temp_cardinal_multi (keep=OID ItemOID Comparator CheckValue);
-    set _temp_cardinal_checkvalue;
-    where cardinality = . and Comparator in ('IN' 'NOTIN');
-    length _CheckValue $ &CheckValue;
-    _CheckValue = CheckValue;
-    do i = 1 to countw(_CheckValue, ' ');
-      CheckValue = scan(_CheckValue, i, ' ');
-      output;
-    end;
+  proc format cntlin=_temp_cardinal;
   run;
 
-  /* Prepare for merge */
-  proc sort data=define.WhereclausedefCheckValue out=_temp_whereclausedefcheckvalue;
-    by OID ItemOID Comparator;
-  run;
-
-  /* Separate CheckValue due to cardinality ambiguiety in the CDISC define.xml 2.0 definition document */
+  /* Separate CheckValue due to cardinality ambiguiety in the CDISC define-xml 2.0 definition document */
   data _temp_checkvalues;
-    merge _temp_whereclausedefcheckvalue
-          _temp_cardinal_multi
-          _temp_cardinal;
-    by OID ItemOID Comparator;
+    set define.WhereClauseDefCheckValue;
+    Cardinality = input(cats(OID, ItemOID, Comparator), _tmp_card.);
+    by OID /* ItemOID Comparator*/;
+    Cardinality = input(cats(OID, ItemOID, Comparator), _tmp_card.);
     if Cardinality = . then Cardinality = 1;
+    retain Order .;
+    if first.OID /*or first.ItemOID or first.Comparator*/ then Order = 0;
+    Order = Order + 1;
   run;
 
   /* Build metadata tables from P21 template */
@@ -217,7 +179,7 @@
            Repeating,
            IsReferenceData as Reference_Data,
            CommentOID      as Comment
-      from define.Itemgroupdef      dsn
+      from define.ItemGroupDef      dsn
       left join _temp_Key_Variables seq
         on dsn.Name = seq.Dataset
      order by Dataset;
@@ -240,10 +202,10 @@
            var.Predecessor,
            Role,
            var.CommentOID    as Comment
-      from define.Itemgroupdefitemref rel
-      join define.Itemgroupdef        dsn
+      from define.ItemGroupDefItemRef rel
+      join define.ItemGroupDef        dsn
         on rel.OID = dsn.OID
-      join define.Itemdef             var
+      join define.ItemDef             var
         on rel.ItemOID = var.OID
       left join _temp_origin          pag
         on var.OID = pag.OID
@@ -252,6 +214,7 @@
 
     /* Itemgroupdefitemref lags a proper key to Itemdef for transposed variables in SUPPQUAL */
     create table &metalib..&standard._ValueLevel as select distinct
+           val.oid,
            val.ItemOID,
            val.OrderNumber           as Order,
            scan(val.ItemOID, 1, '.') as Dataset,
@@ -269,8 +232,8 @@
            val.MethodOID             as Method,
            var.Predecessor,
            var.CommentOID            as Comment
-      from define.Valuelistdef        val
-      join define.Itemdef             var
+      from define.ValuelistDef        val
+      join define.ItemDef             var
         on val.ItemOID = var.OID
       left join _temp_origin          pag
         on val.ItemOID = pag.OID
@@ -281,39 +244,38 @@
 
     /* P21 lags logical operators (and/or). CheckValues has a different cardinality */
     create table &metalib..&standard._WhereClauses as select distinct
-           whe.OID    as ID,
-           dsn.Name   as Dataset,
-           var.Name   as Variable,
+           whe.OID        as ID,
+           dsn.Name       as Dataset,
+           var.Name       as Variable,
            whe.Comparator,
            chv.CheckValue as Value,
-           Cardinality
-      from define.Whereclausedef      whe
-      join define.Itemdef             var
+           Cardinality,
+           Order
+      from define.WhereClauseDef      whe
+      join define.ItemDef             var
         on whe.ItemOID = var.OID
-      join define.Itemgroupdefitemref rel
+      join define.ItemGroupDefItemRef rel
         on var.OID = rel.ItemOID
-      join define.Itemgroupdef        dsn
+      join define.ItemGroupDef        dsn
         on rel.OID = dsn.OID
       left join _temp_checkvalues     chv
         on whe.OID        = chv.OID
        and whe.ItemOID    = chv.ItemOID
        and whe.Comparator = chv.Comparator
      order by ID,
-           Dataset,
-           Variable,
-           whe.Comparator,
-           Value;
+           Order;
 
     /* P21 has codes and enumerated items combined */
     create table &metalib..&standard._Codelists as select distinct
-           cdl.OID                                    as ID,
+           cdl.OID                                         as ID,
            cdl.Name,
-           cdl.Alias                                  as NCI_Codelist_Code,
-           cdl.DataType                               as Data_Type,
-           coalesce(itm.OrderNumber, enu.OrderNumber) as Order,
-           coalescec(itm.CodedValue, enu.CodedValue)  as Term,
-           coalescec(itm.Alias, enu.Alias)            as NCI_Term_Code,
-           itm.Decode                                 as Decoded_Value
+           cdl.Alias                                       as NCI_Codelist_Code,
+           cdl.DataType                                    as Data_Type,
+           coalesce(itm.OrderNumber, enu.OrderNumber)      as Order,
+           coalescec(itm.CodedValue, enu.CodedValue)       as Term,
+           coalescec(itm.Alias, enu.Alias)                 as NCI_Term_Code,
+           coalescec(itm.ExtendedValue, enu.ExtendedValue) as ExtendedValue,
+           itm.Decode                                      as Decoded_Value
       from define.CodeList                    cdl
       left join define.CodeListItem           itm
         on itm.OID = cdl.OID
@@ -329,7 +291,7 @@
            DataType as Data_Type,
            Dictionary,
            Version
-      from define.Codelist
+      from define.CodeList
      where Dictionary ne ''
      order by ID;
 
@@ -343,12 +305,12 @@
            for.FormalExpression as Expression_Code,
            title                as Document,
            Pages
-      from define.Methoddef                      met
-      left join define.Methoddefformalexpression for
+      from define.MethodDef                      met
+      left join define.MethodDefFormalExpression for
         on met.OID = for.OID
-      left join define.Methoddefdocumentref      doc
+      left join define.MethodDefDocumentRef      doc
         on doc.OID = met.OID
-      left join define.Studydocuments            stu
+      left join define.StudyDocuments            stu
         on stu.ID = doc.leafID
       left join _temp_methods                    pag
         on pag.OID = met.OID
@@ -360,12 +322,12 @@
            Comment as Description,
            title,
            Pages
-      from define.Commentdef                 com
+      from define.CommentDef                 com
       left join _temp_comment                pag
         on com.OID = pag.OID
-      left join define.Commentdefdocumentref ref
+      left join define.CommentDefDocumentRef ref
         on com.OID = ref.OID
-      left join define.Studydocuments        doc
+      left join define.StudyDocuments        doc
         on ref.leafID = doc.ID
      order by ID;
 
@@ -374,7 +336,7 @@
            ID,
            title,
            href
-      from define.Studydocuments
+      from define.StudyDocuments
      order by ID;
   quit;
 
@@ -383,23 +345,19 @@
     proc datasets lib=work nolist;
       delete _temp_:;
     quit;
+
+    proc catalog catalog=work.formats;
+      delete _tmp_card.infmt;
+    quit;
   %end;
 %mend;
 
 /*
-LSAF:
-libname metalib "&_SASWS_./leo/clinical/lp9999/8888/metadata/data";
-%define_2_0_0(define = %str(&_SASWS_./leo/clinical/lp9999/8888/metadata/SDTM Define-XML 2.0 with CDISC Stylesheet.xml),
-              xmlmap = %str(&_SASWS_./leo/development/library/metadata/define_2_0_0.map));
-%define_2_0_0(define = %str(&_SASWS_./leo/clinical/lp9999/8888/metadata/ADaM Define-XML 2.0 with CDISC Stylesheet.xml),
-              xmlmap = %str(&_SASWS_./leo/development/library/metadata/define_2_0_0.map));
-
-SAS:
-libname metalib "X:\Users\leo0jxm\metadata";
-%define_2_0_0(define = %str(X:\Users\leo0jxm\metadata\SDTM Define-XML 2.0.xml),
-             xmlmap  = %str(X:\Users\leo0jxm\metadata\define_2_0_0.map));
-%define_2_0_0(define = %str(X:\Users\leo0jxm\metadata\ADaM Define-XML 2.0.xml),
-             xmlmap  = %str(X:\Users\leo0jxm\metadata\define_2_0_0.map));
+libname metalib "X:\Users\jmi\metadata";
+%define_2_0_0(define = %str(X:\Users\jmi\metadata\SDTM Define-XML 2.0.xml),
+             xmlmap  = %str(X:\Users\jmi\metadata\define_2_0_0.map));
+%define_2_0_0(define = %str(X:\Users\jmi\metadata\ADaM Define-XML 2.0.xml),
+             xmlmap  = %str(X:\Users\jmi\metadata\define_2_0_0.map));
 
 proc copy in=define out=work;run;
 */
