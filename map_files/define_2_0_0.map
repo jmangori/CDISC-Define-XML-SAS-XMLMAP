@@ -111,7 +111,14 @@
             <LENGTH>200</LENGTH>
         </COLUMN>
 
-        <COLUMN name="OID">
+        <COLUMN name="StudyOID">
+            <PATH syntax="XPath">/ODM/Study/@OID</PATH>
+            <TYPE>character</TYPE>
+            <DATATYPE>string</DATATYPE>
+            <LENGTH>200</LENGTH>
+        </COLUMN>
+
+        <COLUMN name="MDVOID">
             <PATH syntax="XPath">/ODM/Study/MetaDataVersion/@OID</PATH>
             <TYPE>character</TYPE>
             <DATATYPE>string</DATATYPE>
